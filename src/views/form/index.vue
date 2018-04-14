@@ -410,17 +410,17 @@ export default {
         }
       ],
       tableData: [
-        {
-          id: 1,
-          materialsId: "C0102878",
-          ProductName: "光电直读智能基表",
-          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-          pulse: "1L",
-          number: 7800,
-          require: "a",
-          tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
-        }
+        // {
+        //   id: 1,
+        //   materialsId: "C0102878",
+        //   ProductName: "光电直读智能基表",
+        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+        //   pulse: "1L",
+        //   number: 7800,
+        //   require: "a",
+        //   tableNumber: "壳体编号：E170812201-E170820000",
+        //   unit: "只"
+        // }
         //,
         // {
         //   id: 2,
