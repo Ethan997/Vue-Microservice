@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-button type="primary" size="medium" class="addBtn" @click="addData"><i class="el-icon-edit"></i>添加</el-button>
-    <el-button type="primary" size="medium" class="exportBtn" @click="mergeTrue"  ><i class="el-icon-download"></i>打印预览</el-button>
+    <el-button type="primary" size="medium" class="exportBtn" @click="mergeTrue"  ><i class="el-icon-view"></i>打印预览</el-button>
     <el-button type="primary" size="medium" class="exportBtn"  ><i class="el-icon-download"></i>导出表格</el-button>
 
     <el-table class="elTable"
@@ -180,11 +180,132 @@
         <template slot-scope="scope">
           <el-button v-if="scope.row.edit == true" type="success" @click="confirmEdit(scope.row);" size="small" icon="el-icon-circle-check-outline">完成</el-button>
           <el-button v-if="scope.row.edit == false" type="primary" @click='scope.row.edit=!scope.row.edit' size="small" icon="el-icon-edit">编辑</el-button>
-          <el-button v-if="scope.row.edit == false" type="danger" @click='deleData(scope.row.id-1)' size="small" icon="el-icon-delete">删除</el-button>
+          <el-button v-if="scope.row.edit == false" type="danger" @click='deleData(scope.row)' size="small" icon="el-icon-delete">删除</el-button>
         </template>
       </el-table-column>
 
     </el-table>
+
+    <el-dialog
+      title="打印预览"
+      :visible.sync="dialogVisible"
+      width="80%"
+      :before-close="handleClose">
+      <el-table class="elTable"
+      :data="tableData"
+      border
+      stripe
+      v-loading.body="listLoading" 
+      :span-method="objectSpanMethod"
+      :max-height="windowHeight"  
+      >
+        <el-table-column
+          label="发文部门"
+          width="140">
+          <el-table-column
+            label="订单编号"
+            width="140">
+              <el-table-column label="物料编码" width="140"  >
+                <template slot-scope="scope" >
+                    <template v-if="scope.row.edit">
+                      <el-input v-model="scope.row.materialsId" placeholder="请输入内容"></el-input>
+                    </template>
+                    <span v-else>{{scope.row.materialsId}}</span>
+                </template>
+              </el-table-column>
+          </el-table-column>
+        </el-table-column>
+        
+        <el-table-column
+          prop="indentId"
+          label="销售部"
+          width="600">
+            <el-table-column
+            :label="this.tableHeaderdata.indentId"
+            width="600">
+                <el-table-column
+                  label="产品名称"
+                  width="200"
+                  prop="ProductName"
+                >
+                </el-table-column>
+                <el-table-column
+                  label="配件要求"
+                  width="891"
+                >
+                  <el-table-column
+                    label="型号"
+                    width="360"
+                    prop="type"
+                  >
+                  </el-table-column>
+                  <el-table-column
+                    label="脉冲"
+                    width="40"
+                    prop="pulse"
+                  >
+                  </el-table-column>
+                </el-table-column>
+            </el-table-column>
+        </el-table-column>
+
+        <el-table-column
+          label="受文部门"
+          width="120">
+          <el-table-column
+            label="要求完成日期"
+            width="100">
+              <el-table-column
+                label="单位"
+                width="60"
+                prop="unit"
+              >
+              </el-table-column>
+              <el-table-column
+                label="数量"
+                width="60"
+                prop="number"
+              >
+              </el-table-column>
+          </el-table-column>
+        </el-table-column>
+        
+        <el-table-column
+          prop="indentId"
+          label="生产部、品管部"
+          width="787">
+            <el-table-column
+            :label="this.tableHeaderdata.date"
+            width="600">
+                <el-table-column
+                  label="包装方式"
+                  width="200"
+                  prop="ProductName"
+                >
+                </el-table-column>
+                <el-table-column
+                  label="配件要求"
+                  width="587"
+                >
+                  <el-table-column
+                    label="表号"
+                    width="360"
+                    prop="tableNumber"
+                  >
+                  </el-table-column>
+                  <el-table-column
+                    label="配件"
+                    width="436"
+                    prop="require"
+                  >
+                  </el-table-column>
+                </el-table-column>
+            </el-table-column>
+        </el-table-column>             
+
+      </el-table>
+
+    </el-dialog>
   </div>
 </template>
 
@@ -208,23 +329,24 @@ export default {
   @return Array
   */
     getMergeNumber(column) {
-      //查找合并行数和列数
-      for (
-        let i = 0, j = 1;
-        i < this.tableData.length, j < this.tableData.length;
-        i++, j++
-      ) {
-        if (
-          this.tableData[i].require == this.tableData[i + 1].require &&
-          this.tableData[i].require != " "
+      if (this.mergeShow === true) {      
+        //查找合并行数和列数
+        for (
+          let i = 0, j = 1;
+          i < this.tableData.length, j < this.tableData.length;
+          i++, j++
         ) {
-          if (this.merge.indexOf(i) === -1) {
-            //去重复
-            this.merge.push(i); //merge加入i
-            this.merge = this.merge.sort(this.mergeSort);
+          if (
+            this.tableData[i].require == this.tableData[i + 1].require &&
+            this.tableData[i].require != " "
+          ) {
+            if (this.merge.indexOf(i) === -1) {
+              //去重复
+              this.merge.push(i); //merge加入i
+              this.merge = this.merge.sort(this.mergeSort);
+            }
           }
         }
-      }
       for (
         let i = 0, j = 1;
         i < this.tableData.length, j < this.tableData.length;
@@ -265,20 +387,23 @@ export default {
         //   }
         // }
       }
+      }      
     },
     getMergeObj(arr) {
-      // 获取合并数组对象
-      let result = [],
-        i = 0;
-      result[i] = [arr[0]];
-      arr.reduce(function(prev, cur) {
-        cur - prev === 1 ? result[i].push(cur) : (result[++i] = [cur]);
-        return cur;
-      });
-      return result;
+      if (this.mergeShow === true) {
+        // 获取合并数组对象
+        let result = [],
+          i = 0;
+        result[i] = [arr[0]];
+        arr.reduce(function(prev, cur) {
+          cur - prev === 1 ? result[i].push(cur) : (result[++i] = [cur]);
+          return cur;
+        });
+        return result;
+      }
     },
     objectSpanMethod({ row, column, rowIndex, columnIndex }) {
-      if (this.mergeShow === false) {
+      if (this.mergeShow === true) {
         for (let j = 0; j < this.storeMerge.length; j++) {
           if (columnIndex === 8) {
             // 第几列
@@ -312,14 +437,24 @@ export default {
       }
     },
     mergeTrue() {
+      this.dialogVisible = true;
+      
       this.mergeShow = true;
+      this.getMergeNumber();
+      this.getMergeObj();
+      this.objectSpanMethod();
+      this.$message({
+        message: '开始合并单元格'+this.mergeShow,
+        type: 'success'
+      })
+      
+      
     },
     mergeSort(a, b) {
       return a - b;
     },
     addData() {
       this.tableData.push({
-        id: this.tableData.length + 1,
         materialsId: " ",
         ProductName: " ",
         type: " ",
@@ -341,14 +476,21 @@ export default {
       this.listLoading = false;
       this.getMergeNumber();
     },
-    deleData(id) {
-      this.$message({
-        message: "操作成功",
-        type: "success"
-      });
-      this.tableData.splice(id, 1);
-      this.edit = !this.edit;
-      this.getMergeNumber();
+    deleData(row) {
+        let rowIndex = this.tableData.indexOf(row)
+        if(rowIndex !== -1) {
+          this.tableData.splice(rowIndex, 1);
+          this.edit = !this.edit;
+          this.getMergeNumber();
+          this.$message({
+            message: "添加成功 "+rowIndex,
+            type: "success",
+          });
+        }else {
+          this.$message.error('删除失败,请重新尝试')
+        }
+
+
     },
     getList() {
       this.listLoading = true;
@@ -382,6 +524,13 @@ export default {
     },
     setEdit(row) {
       row.edit = !row.edit;
+    },
+    handleClose(done) {
+      this.$confirm("确认关闭？")
+        .then(_ => {
+          done();
+        })
+        .catch(_ => {});
     }
   },
   data() {
@@ -410,172 +559,172 @@ export default {
         }
       ],
       tableData: [
-        // {
-        //   id: 1,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "a",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // }
-        //,
-        // {
-        //   id: 2,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "a",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 3,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "a",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 4,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "s",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 5,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "s",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 6,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "d",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 7,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "d",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 8,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "d",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 9,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "e",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 10,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "q",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 11,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "q",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 12,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "g",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 13,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "g",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 14,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "g",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // },
-        // {
-        //   id: 15,
-        //   materialsId: "C0102878",
-        //   ProductName: "光电直读智能基表",
-        //   type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-        //   pulse: "1L",
-        //   number: 7800,
-        //   require: "w",
-        //   tableNumber: "壳体编号：E170812201-E170820000",
-        //   unit: "只"
-        // }
+        {
+          id: 1,
+          materialsId: "C010281",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "a",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        }
+        ,
+        {
+          id: 2,
+          materialsId: "C010282",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "a",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 3,
+          materialsId: "C010283",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "a",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 4,
+          materialsId: "C010284",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "s",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 5,
+          materialsId: "C010285",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "s",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 6,
+          materialsId: "C010286",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "d",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 7,
+          materialsId: "C010287",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "d",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 8,
+          materialsId: "C010288",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "d",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 9,
+          materialsId: "C010289",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "e",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 10,
+          materialsId: "C0102810",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "q",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 11,
+          materialsId: "C0102811",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "q",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 12,
+          materialsId: "C0102812",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "g",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 13,
+          materialsId: "C0102813",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "g",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 14,
+          materialsId: "C0102814",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "g",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        },
+        {
+          id: 15,
+          materialsId: "C0102815",
+          ProductName: "光电直读智能基表",
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
+          pulse: "1L",
+          number: 7800,
+          require: "w",
+          tableNumber: "壳体编号：E170812201-E170820000",
+          unit: "只"
+        }
       ],
       selectValue: "",
       dialogVisible: false
