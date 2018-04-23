@@ -3,7 +3,7 @@
     
       <el-button type="primary" size="medium" class="addBtn" @click="addData"><i class="el-icon-edit"></i>添加</el-button>
       <el-button type="primary" size="medium" class="exportBtn" @click="mergeTrue"  ><i class="el-icon-view"></i>打印预览</el-button>
-      <el-button type="primary" size="medium" class="exportBtn" @click="exportTable" ><i class="el-icon-download"></i>导出表格</el-button>
+      <el-button type="primary" size="medium" class="exportBtn" @click="handleDownload" ><i class="el-icon-download"></i>导出表格</el-button>
     <div v-show="showTable">
       <el-table class="elTable" :data="tableHeaderdata" border style="width:921px;" >
         <el-table-column
@@ -51,12 +51,11 @@
 
       </el-table>    
 
-      <el-table class="elTable"
+      <el-table class="elTable mainTable"
         :data="tableData"
         border
         stripe
         v-loading.body="listLoading" 
-        :max-height="windowHeight"  
         :span-method='objectSpanMethod'
         >
         
@@ -129,13 +128,13 @@
                 <el-table-column
                   label="包装方式"
                   width="180"
-                  prop="ProductName"
+                  prop="packingWay"
                 >
                 <template slot-scope="scope" >
                     <template v-if="scope.row.edit">
-                    <el-input v-model.trim="scope.row.ProductName" placeholder="请输入内容"></el-input>
+                    <el-input v-model.trim="scope.row.packingWay" placeholder="请输入内容"></el-input>
                     </template>
-                    <span v-else>{{scope.row.ProductName}}</span>
+                    <span v-else>{{scope.row.packingWay}}</span>
                 </template>
                 </el-table-column>
                 <el-table-column
@@ -178,7 +177,7 @@
 
       </el-table>
 
-      <el-dialog title="打印预览" :visible.sync="dialogVisible"  width="1430px" :before-close="handleClose">
+      <el-dialog title="打印预览" :visible.sync="dialogVisible"  width="1630px" :before-close="handleClose">
         <div id="print">
           <div class="title">
             <h1>温岭甬岭水表有限公司</h1>
@@ -211,7 +210,7 @@
                     width="400">
                         <el-table-column
                           label="产品名称"
-                          width="160"
+                          width="260"
                           prop="ProductName"
                         >
                         </el-table-column>
@@ -264,8 +263,8 @@
                     width="600">
                         <el-table-column
                           label="包装方式"
-                          width="120"
-                          prop="ProductName"
+                          width="200"
+                          prop="packingWay"
                         >
                         </el-table-column>
                         <el-table-column
@@ -321,79 +320,124 @@ export default {
   created() {
     this.getMergeNumber();
     this.getList();
+    this.fetchData()
   },
   methods: {
     /**
-  *
-  方法说明：得到具有相同内容的可合并rowIndex数组
-  *
-  @method getMergeNumber
-  *
-  @param  
-  merge: 所有的可合并的rowIndex数组，如【0,1,2,4,5,6,7,8,9】
-  storeMerge：具有相同内容的可合并rowIndex数组，如[[0,1,2],[4,5,6],[7,8,9]]
-  *
-  @return Array
-  */
-    getMergeNumber(column) {
+    *
+    方法说明：得到具有相同内容的可合并rowIndex数组
+    *
+    @method getMergeNumber
+    *
+    @param  
+    merge: 所有的可合并的rowIndex数组，如【0,1,2,4,5,6,7,8,9】
+    storeMerge：具有相同内容的可合并rowIndex数组，如[[0,1,2],[4,5,6],[7,8,9]]
+    *
+    @return Array
+    */
+    getMergeNumber(merginColumn) {
       if (this.mergeShow === true) {
-        //查找合并行数和列数
-        for (
-          let i = 0, j = 1;
-          i < this.tableData.length, j < this.tableData.length;
-          i++, j++
-        ) {
-          if (
-            this.tableData[i].require == this.tableData[i + 1].require &&
-            this.tableData[i].require != " "
-          ) {
-            if (this.merge.indexOf(i) === -1) {
+          for ( let i = 0, j = 1;  i < this.tableData.length, j < this.tableData.length; i++, j++  ) {
+            if ( this.tableData[i].ProductName == this.tableData[i + 1].ProductName && this.tableData[i].ProductName != " "  ) {
               //去重复
-              this.merge.push(i); //merge加入i
-              this.merge = this.merge.sort(this.mergeSort);
+              if (this.merge.indexOf(i) === -1) {
+                this.merge.push(i); //merge加入i
+                this.merge = this.merge.sort(this.mergeSort);
+              }
+              //去重复
+              if (this.mergeStart.indexOf(i) === -1) {
+                this.mergeStart.push(i); //mergeStart加入i
+                this.mergeStart = this.mergeStart.sort(this.mergeSort);
+              }
             }
           }
-        }
-        for (
-          let i = 0, j = 1;
-          i < this.tableData.length, j < this.tableData.length;
-          i++, j++
-        ) {
-          if (
-            this.tableData[i].require == this.tableData[i + 1].require &&
-            this.tableData[i].require != " "
-          ) {
-            if (this.mergeStart.indexOf(i) === -1) {
-              //去重复
-              this.mergeStart.push(i); //merge加入i
-              this.mergeStart = this.mergeStart.sort(this.mergeSort);
+
+          if (this.merge.length > 0) {
+            // 添加合并数组对象
+            this.storeMerge = this.getMergeObj(this.merge);
+            for (let i = 0; i < this.storeMerge.length; i++) {
+              let location = this.storeMerge[i].length - 1;
+              this.storeMerge[i].push(this.storeMerge[i][location] + 1);
             }
           }
-        }
 
-        if (this.merge.length > 0) {
-          // 添加合并数组对象
-          this.storeMerge = this.getMergeObj(this.merge);
-          for (let i = 0; i < this.storeMerge.length; i++) {
-            let location = this.storeMerge[i].length - 1;
-            this.storeMerge[i].push(this.storeMerge[i][location] + 1);
+          if (this.mergeStart.length > 0) {
+            // 添加合并数组对象
+            this.mergeIndex = this.getMergeObj(this.mergeStart);
+            for (let i = 0; i < this.mergeIndex.length; i++) {
+              let location = this.mergeIndex[i].length - 1;
+              this.mergeIndex[i].push(this.mergeIndex[i][location] + 1);
+              this.mergeIndex[i].shift();
+            }
           }
-        }
+      // column为  packingWay
+          for ( let i = 0, j = 1;  i < this.tableData.length, j < this.tableData.length; i++, j++  ) {
+            if ( this.tableData[i].packingWay == this.tableData[i + 1].packingWay && this.tableData[i].packingWay != " "  ) {
+              //去重复
+              if (this.mergePack.indexOf(i) === -1) {
+                this.mergePack.push(i); //merge加入i
+                this.mergePack = this.mergePack.sort(this.mergeSort);
+              }
+              //去重复
+              if (this.mergePackStart.indexOf(i) === -1) {
+                this.mergePackStart.push(i); //mergeStart加入i
+                this.mergePackStart = this.mergePackStart.sort(this.mergeSort);
+              }
+            }
+          }
 
-        if (this.mergeStart.length > 0) {
-          // 添加合并数组对象
-          this.mergeIndex = this.getMergeObj(this.mergeStart);
-          for (let i = 0; i < this.mergeIndex.length; i++) {
-            let location = this.mergeIndex[i].length - 1;
-            this.mergeIndex[i].push(this.mergeIndex[i][location] + 1);
-            this.mergeIndex[i].shift();
+          if (this.mergePack.length > 0) {
+            // 添加合并数组对象
+            this.storePackMerge = this.getMergeObj(this.mergePack);
+            for (let i = 0; i < this.storePackMerge.length; i++) {
+              let location = this.storePackMerge[i].length - 1;
+              this.storePackMerge[i].push(this.storePackMerge[i][location] + 1);
+            }
           }
-          // if(this.mergeIndex.length >0 ) {
-          //   for(let i=0;i<this.mergeIndex.length;i++) {
-          //       this.mergeIndex=this.mergeIndex.concat(this.mergeIndex[i])
-          //   }
-          // }
-        }
+
+          if (this.mergePackStart.length > 0) {
+            // 添加合并数组对象
+            this.mergePackIndex = this.getMergeObj(this.mergePackStart);
+            for (let i = 0; i < this.mergePackIndex.length; i++) {
+              let location = this.mergePackIndex[i].length - 1;
+              this.mergePackIndex[i].push(this.mergePackIndex[i][location] + 1);
+              this.mergePackIndex[i].shift();
+            }
+          }
+          // column为  require
+          for ( let i = 0, j = 1;  i < this.tableData.length, j < this.tableData.length; i++, j++  ) {
+            if ( this.tableData[i].require == this.tableData[i + 1].require && this.tableData[i].require != " "  ) {
+              //去重复
+              if (this.mergeRequire.indexOf(i) === -1) {
+                this.mergeRequire.push(i); //merge加入i
+                this.mergeRequire = this.mergeRequire.sort(this.mergeSort);
+              }
+              //去重复
+              if (this.mergeRequireStart.indexOf(i) === -1) {
+                this.mergeRequireStart.push(i); //mergeStart加入i
+                this.mergeRequireStart = this.mergeRequireStart.sort(this.mergeSort);
+              }
+            }
+          }
+
+          if (this.mergeRequire.length > 0) {
+            // 添加合并数组对象
+            this.storeRequireMerge = this.getMergeObj(this.mergeRequire);
+            for (let i = 0; i < this.storeRequireMerge.length; i++) {
+              let location = this.storeRequireMerge[i].length - 1;
+              this.storeRequireMerge[i].push(this.storeRequireMerge[i][location] + 1);
+            }
+          }
+
+          if (this.mergeRequireStart.length > 0) {
+            // 添加合并数组对象
+            this.mergeRequireIndex = this.getMergeObj(this.mergeRequireStart);
+            for (let i = 0; i < this.mergeRequireIndex.length; i++) {
+              let location = this.mergeRequireIndex[i].length - 1;
+              this.mergeRequireIndex[i].push(this.mergeRequireIndex[i][location] + 1);
+              this.mergeRequireIndex[i].shift();
+            }
+          }
       }
     },
     getMergeObj(arr) {
@@ -412,7 +456,7 @@ export default {
     objectSpanMethod({ row, column, rowIndex, columnIndex }) {
       if (this.mergeShow === true) {
         for (let j = 0; j < this.storeMerge.length; j++) {
-          if (columnIndex === 8) {
+          if (columnIndex === 1) {
             // 第几列
             if (this.storeMerge.length > 0) {
               let rowIndexStr = "";
@@ -427,6 +471,68 @@ export default {
               rowIndexStr = rowIndexStr.replace(/,/gi, "||rowIndex===");
               let sumRowspan = this.storeMerge[j].length; // 合并的行数
               if (rowIndex == this.storeMerge[j][0]) {
+                // 第几行开始合并
+                return {
+                  rowspan: sumRowspan, // 合并的行数
+                  colspan: 1 // 合并的列数
+                };
+              } else if (eval(rowIndexStr)) {
+                return {
+                  rowspan: 0,
+                  colspan: 0
+                };
+              }
+            }
+          }
+        }
+        // column为packingWay
+        for (let j = 0; j < this.storeMerge.length; j++) {
+          if (columnIndex === 6) {
+            // 第几列
+            if (this.storePackMerge.length > 0) {
+              let rowIndexStr = "";
+              for (let i = 0; i < this.mergePackIndex.length; i++) {
+                if (i < this.mergePackIndex.length - 1) {
+                  rowIndexStr =
+                    rowIndexStr + "rowIndex===" + this.mergePackIndex[i] + "||";
+                } else {
+                  rowIndexStr += "rowIndex===" + this.mergePackIndex[i];
+                }
+              }
+              rowIndexStr = rowIndexStr.replace(/,/gi, "||rowIndex===");
+              let sumRowspan = this.storePackMerge[j].length; // 合并的行数
+              if (rowIndex == this.storePackMerge[j][0]) {
+                // 第几行开始合并
+                return {
+                  rowspan: sumRowspan, // 合并的行数
+                  colspan: 1 // 合并的列数
+                };
+              } else if (eval(rowIndexStr)) {
+                return {
+                  rowspan: 0,
+                  colspan: 0
+                };
+              }
+            }
+          }
+        }
+        // column为 require
+        for (let j = 0; j < this.storeRequireMerge.length; j++) {
+          if (columnIndex === 8) {
+            // 第几列
+            if (this.storeRequireMerge.length > 0) {
+              let rowIndexStr = "";
+              for (let i = 0; i < this.mergeRequireIndex.length; i++) {
+                if (i < this.mergeRequireIndex.length - 1) {
+                  rowIndexStr =
+                    rowIndexStr + "rowIndex===" + this.mergeRequireIndex[i] + "||";
+                } else {
+                  rowIndexStr += "rowIndex===" + this.mergeRequireIndex[i];
+                }
+              }
+              rowIndexStr = rowIndexStr.replace(/,/gi, "||rowIndex===");
+              let sumRowspan = this.storeRequireMerge[j].length; // 合并的行数
+              if (rowIndex == this.storeRequireMerge[j][0]) {
                 // 第几行开始合并
                 return {
                   rowspan: sumRowspan, // 合并的行数
@@ -456,7 +562,7 @@ export default {
         storeCanvas.appendChild(canvas);
         let canvasPNG = document.getElementById("storeCanvas").firstChild;
         let img = canvasPNG.toDataURL("image/png");
-        document.body.innerHTML ='<img  src="' + img +'"/><br/><button onclick="window.location.reload()" >返回</button> ';
+        document.body.innerHTML ='<button  onclick="window.location.reload()" >返回</button><br/><img  src="' + img +'"/>';
         printJS(img, "image");
       });
     },
@@ -491,7 +597,8 @@ export default {
         number: null,
         require: " ",
         tableNumber: " ",
-        unit: " "
+        unit: " ",
+        packingWay: ""
       });
       this.listLoading = true;
       const items = this.tableData;
@@ -558,31 +665,65 @@ export default {
           done();
         })
         .catch(_ => {});
+    },
+    fetchData() {
+        this.list = this.tableData
+    },
+    handleDownload() {
+      this.downloadLoading = true
+      import('@/vendor/Export2Excel').then(excel => {
+        const tHeader = ['物料编码', '产品名称', '型号', '脉冲', '单位','数量','包装方式','表号','配件']
+        const filterVal = ['materialsId', 'ProductName', 'type', 'pulse','unit', 'number','packingWay','tableNumber','require']
+        const list = this.list
+        const data = this.formatJson(filterVal, list)
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+          filename: this.filename,
+          autoWidth: this.autoWidth
+        })
+      })
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map(v => filterVal.map(j => {
+        if (j === 'timestamp') {
+          return parseTime(v[j])
+        } else {
+          return v[j]
+        }
+      }))
     }
   },
   data() {
     return {
       showTable: true,
-      list: null,
-      listLoading: true,
       number: 1,
       mergeStart: [],
-      mergeEnd: [],
-      sum_in: [],
-      sum_out: [],
-      windowHeight: 1300,
-      block: [],
       merge: [],
       storeMerge: [],
       mergeIndex: [],
+      mergePack: [],
+      mergePackStart: [],
+      storePackMerge: [],
+      mergePackIndex: [],
+      mergeRequire: [],
+      mergeRequireStart: [],
+      storeRequireMerge: [],
+      mergeRequireIndex: [],
       mergeShow: false,
       edit: false,
+      merginColumn: [{column: 1,name: 'ProductName'},{column: 6,name: 'packingWay'},{column: 8,name: 'require'}],
+      dialogVisible: false,
+      list: null,
+      listLoading: true,
+      filename: '生产任务通知单 ' + this.getDate(),
+      autoWidth: true,
       tableHeaderdata: [
         {
           indentIdCN: "订单编号",
-          indentId: "qq ",
+          indentId: "GX65683",
           dateCN: "要求完成日期",
-          date: " ",
+          date: "5.20 ",
           unit: "只",
           others: " ",
           name: " "
@@ -592,149 +733,160 @@ export default {
         {
           id: 1,
           materialsId: "C010281",
-          ProductName: "光电直读智能基表",
+          ProductName: "多流干式蓝塑铜壳（凸台）冷水表40°，预装远传-蓝色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "a",
+          require: "冷水不含接帽，热水含接帽，铁壳放置橡胶垫片，铅封全部换成蓝色，塑料铅封",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
           id: 2,
           materialsId: "C010282",
-          ProductName: "光电直读智能基表",
+          ProductName: "多流干式蓝塑铜壳（凸台）冷水表40°，预装远传-蓝色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "a",
+          require: "冷水不含接帽，热水含接帽，铁壳放置橡胶垫片，铅封全部换成蓝色，塑料铅封",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
           id: 3,
           materialsId: "C010283",
-          ProductName: "光电直读智能基表",
+          ProductName: "多流干式蓝塑铜壳（凸台）冷水表40°，预装远传-蓝色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "a",
+          require: "冷水不含接帽，热水含接帽，铁壳放置橡胶垫片，铅封全部换成蓝色，塑料铅封",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
           id: 4,
           materialsId: "C010284",
-          ProductName: "光电直读智能基表",
+          ProductName: "多流干式蓝塑铜壳（凸台）热水表90°，预装远传-红色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "s",
+          require: "字面：YL8.314.628,流量内控：1.5（Qn，Qt），3（Qmin）",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
           id: 5,
           materialsId: "C010285",
-          ProductName: "光电直读智能基表",
+          ProductName: "多流干式蓝塑铜壳（凸台）热水表90°，预装远传-红色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "s",
+          require: "字面：YL8.314.628,流量内控：1.5（Qn，Qt），3（Qmin）",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
           id: 6,
           materialsId: "C010286",
-          ProductName: "光电直读智能基表",
+          ProductName: "多流干式蓝塑铜壳（凸台）热水表90°，预装远传-红色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "d",
+          require: "可拆式字面，YL8.314.599，YL8.314.600，铅封换成蓝色铅封",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
           id: 7,
           materialsId: "C010287",
-          ProductName: "光电直读智能基表",
+          ProductName: "多流干式蓝塑铁壳法兰式（凸台），冷水表-预装远传-蓝色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "d",
+          require: "可拆式字面，YL8.314.599，YL8.314.600，铅封换成蓝色铅封",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "复合纸箱，套泡沫盖，套气球袋"
         },
         {
           id: 8,
           materialsId: "C010288",
-          ProductName: "光电直读智能基表",
+          ProductName: "DN50-DN200自制/外购可拆式，蓝塑灰铁壳体，冷水50°，流量内控1.5（Qn，Qt）3（Qmin），国标PN10，预装远传，自制360°透明罩/钛美合金钢体盖，外购不同透明罩/普通钢表盖",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "d",
+          require: "可拆式字面，YL8.314.599，YL8.314.600，铅封换成蓝色铅封",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "复合纸箱，配橡胶垫片，套泡沫盖，套气泡袋，中性铅封，指定铭牌"
         },
         {
           id: 11,
           materialsId: "C0102811",
-          ProductName: "光电直读智能基表",
+          ProductName: "整机外购垂直螺翼式打表-冷水50°，蓝塑球墨壳-PN10-巴西法兰标准钛镁合金360°钢表盖-技数器360度预装远传（每只表装2处磁铁）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "q",
+          require: "排污表，字面：YL8.314.824，该系列产品表号规则此单起有所更改，请注意，铅封换成蓝色",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "DN50-150复合纸箱，DN200-300胶合板木箱，配橡胶垫片"
         },
         {
           id: 12,
           materialsId: "C0102812",
-          ProductName: "光电直读智能基表",
+          ProductName: "单流D5远传线",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "g",
+          require: "排污表，字面：YL8.314.824，该系列产品表号规则此单起有所更改，请注意，铅封换成蓝色",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "DN50-150复合纸箱，DN200-300胶合板木箱，配橡胶垫片"
         },
         {
           id: 13,
           materialsId: "C0102813",
-          ProductName: "光电直读智能基表",
+          ProductName: "甬美多流远传线",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "g",
+          require: "排污表，字面：YL8.314.824，该系列产品表号规则此单起有所更改，请注意，铅封换成蓝色",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "DN50-150复合纸箱，DN200-300胶合板木箱，配橡胶垫片"
         },
         {
           id: 14,
           materialsId: "C0102814",
-          ProductName: "光电直读智能基表",
+          ProductName: "可拆式大表远传线",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "g",
+          require: "排污表，字面：YL8.314.824，该系列产品表号规则此单起有所更改，请注意，铅封换成蓝色",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "参照上一单打包方式"
         },
         {
           id: 15,
           materialsId: "C0102815",
-          ProductName: "光电直读智能基表",
+          ProductName: "可拆式大表远传线",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
           pulse: "1L",
           number: 7800,
-          require: "w",
+          require: "发货5天内必须提供电子流量记录（目前严重滞后）",
           tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只"
+          unit: "只",
+          packingWay: "参照上一单打包方式"
         }
-      ],
-      selectValue: "",
-      dialogVisible: false
+      ]
     };
   }
 };
@@ -743,6 +895,9 @@ export default {
 .elTable {
   margin: 10px 0 0 60px;
   width: 90%;
+}
+.mainTable {
+  margin-bottom: 100px;
 }
 .el-table .cell,
 .el-table th div {
@@ -759,13 +914,13 @@ export default {
   padding-left: 10px;
   padding-right: 10px;
   margin-left: 60px;
-  width: 1249.5px;
+  width: 1432px;
   height: 92.48px;
   border: 1px solid  #E8EBF4;
   border-top: 0;
 }
 .othersInput {
-  width: 1100px;
+  width: 1300px;
   border: 0;
   color: #6a6f77;
 }
