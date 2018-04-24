@@ -561,6 +561,7 @@ export default {
       return this.localeDate
     },
     setPrint() { // 打印设置
+      document.getElementsByTagName('body')[0].style.cssText="zoom:100%"
       let print = document.getElementById("print");
       let storeCanvas = document.getElementById("storeCanvas");
 
@@ -909,7 +910,6 @@ export default {
 <style>
 body{
   zoom: 67% ;
-  color: black;
 }
 .elTable {
   margin: 10px 0 0 60px;
@@ -933,14 +933,10 @@ body{
   padding-right: 10px;
   width: 1580px;
   height: 92.48px;
-  border: 1px solid  black;
+  border: 1px solid  #E8EBF4;
   border-top: 0;
   font-size: 20px;
 }
-.el-table {
-  border: 1px solid black;
-}
-
 .othersRequire > span {
   margin-left: 10px;
 }
@@ -978,18 +974,6 @@ body{
   right: 20px;
   font-size: 20px;  
   padding-bottom:20px; 
-}
-.el-dialog__body {
-  color: black;
-}
-.el-table--border td, .el-table--border th {
-  border-right: 1px solid black;
-}
-.el-table--border td, .el-table--border th {
-  border-bottom: 1px solid black;  
-}
-.el-table td, .el-table th.is-leaf {
-  border-bottom: 1px solid black;    
 }
 .printTable {
   font-size: 20px;
