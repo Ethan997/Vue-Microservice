@@ -5,7 +5,7 @@
       <el-button type="primary" size="medium" class="exportBtn" @click="mergeTrue"  ><i class="el-icon-view"></i>打印预览</el-button>
       <el-button type="primary" size="medium" class="exportBtn" @click="handleDownload" ><i class="el-icon-download"></i>导出表格</el-button>
     <div v-show="showTable">
-      <el-table class="elTable" :data="tableHeaderdata" border style="width:921px;" >
+      <el-table class="elTable" :data="tableHeaderdata" border style="width:1041px;" >
         <el-table-column
           label="发文部门"
           width="140"
@@ -25,7 +25,7 @@
 
         <el-table-column
           label="受文部门"
-          width="120"
+          width="140"
           prop="dateCN"  
             >
 
@@ -33,10 +33,10 @@
         
         <el-table-column
           label="生产部、品管部"
-          width="200">
+          width="300">
             <template slot-scope="scope" >
-                <template v-if="scope.row.edit">
-                    <el-input v-model.trim="scope.row.date" placeholder="请输入内容"></el-input>
+                <template class="block" v-if="scope.row.edit">
+                    <el-date-picker v-model="scope.row.date" type="date" placeholder="选择日期" format="yyyy年MM月dd日" value-format="yyyy-MM-dd"> </el-date-picker>
                 </template>
                 <span v-else>{{scope.row.date}}</span>
             </template>
@@ -127,12 +127,13 @@
         
                 <el-table-column
                   label="包装方式"
-                  width="180"
+                  width="300"
                   prop="packingWay"
                 >
                 <template slot-scope="scope" >
                     <template v-if="scope.row.edit">
-                    <el-input v-model.trim="scope.row.packingWay" placeholder="请输入内容"></el-input>
+                      <el-input  style="width:70%" v-model.trim="scope.row.packingWay" placeholder="请输入内容"></el-input>
+                      <el-button  type="primary" size="small" plain @click="ditto(scope.row,6)" >同上</el-button>
                     </template>
                     <span v-else>{{scope.row.packingWay}}</span>
                 </template>
@@ -159,7 +160,8 @@
                   >
                     <template slot-scope="scope" >
                         <template v-if="scope.row.edit">
-                        <el-input v-model.trim="scope.row.require" placeholder="请输入内容"></el-input>
+                          <el-input  style="width:80%" v-model.trim="scope.row.require" placeholder="请输入内容"></el-input>
+                          <el-button  type="primary" size="small" plain @click="ditto(scope.row,8)" >同上</el-button>
                         </template>
                         <span v-else>{{scope.row.require}}</span>
                     </template>
@@ -177,20 +179,24 @@
 
       </el-table>
 
-      <el-dialog title="打印预览" :visible.sync="dialogVisible"  width="1630px" :before-close="handleClose">
+      <el-dialog title="打印预览" :visible.sync="dialogVisible"  width="1622px" :before-close="handleClose">
         <div id="print">
           <div class="title">
             <h1>温岭甬岭水表有限公司</h1>
             <h1 class="">生产任务通知单</h1>
           </div>
-          <el-table class="elTable" :data="tableData"border stripe :span-method="objectSpanMethod" >
+           <div>
+            <span class="editionNum">Q/YL03-05 版次:B-0</span>
+            <span class="number">{{ getPrintSorting() }}</span>
+          </div>
+          <el-table class="printTable" :data="tableData"border  :span-method="objectSpanMethod" >
                 <el-table-column
                   label="发文部门"
-                  width="110">
+                  width="120">
                   <el-table-column
                     label="订单编号"
-                    width="110">
-                      <el-table-column label="物料编码" width="110"  >
+                    width="120">
+                      <el-table-column label="物料编码" width="120"  >
                         <template slot-scope="scope" >
                             <template v-if="scope.row.edit">
                               <el-input v-model="scope.row.materialsId" placeholder="请输入内容"></el-input>
@@ -204,13 +210,13 @@
                 <el-table-column
                   prop="indentId"
                   label="销售部"
-                  width="400">
+                  width="590">
                     <el-table-column
                     :label="this.tableHeaderdata[0].indentId"
-                    width="400">
+                    width="590">
                         <el-table-column
                           label="产品名称"
-                          width="260"
+                          width="350"
                           prop="ProductName"
                         >
                         </el-table-column>
@@ -257,19 +263,19 @@
                 
                 <el-table-column
                   label="生产部、品管部"
-                  width="600">
+                  width="730">
                     <el-table-column
                     :label="this.tableHeaderdata[0].date"
-                    width="600">
+                    width="730">
                         <el-table-column
                           label="包装方式"
-                          width="200"
+                          width="240"
                           prop="packingWay"
                         >
                         </el-table-column>
                         <el-table-column
                           label="配件要求"
-                          width="480"
+                          width="490"
                         >
                           <el-table-column
                             label="表号"
@@ -279,7 +285,7 @@
                           </el-table-column>
                           <el-table-column
                             label="配件"
-                            width="300"
+                            width="310"
                             prop="require"
                           >
                           </el-table-column>
@@ -549,12 +555,12 @@ export default {
         }
       }
     },
-    getDate() {
+    getDate() { // 得到日期
       let date = new Date();
       this.localeDate = date.toLocaleDateString();
       return this.localeDate
     },
-    setPrint() {
+    setPrint() { // 打印设置
       let print = document.getElementById("print");
       let storeCanvas = document.getElementById("storeCanvas");
 
@@ -566,7 +572,8 @@ export default {
         printJS(img, "image");
       });
     },
-    exportTable() {},
+    exportTable() {}
+    ,
     mergeTrue() {
       this.dialogVisible = true;
 
@@ -585,10 +592,10 @@ export default {
         type: "success"
       });
     },
-    mergeSort(a, b) {
+    mergeSort(a, b) { 
       return a - b;
     },
-    addData() {
+    addData() { // 添加功能
       this.tableData.push({
         materialsId: " ",
         ProductName: " ",
@@ -612,7 +619,7 @@ export default {
       this.listLoading = false;
       this.getMergeNumber();
     },
-    deleData(row) {
+    deleData(row) { // 删除功能
       let rowIndex = this.tableData.indexOf(row);
       if (rowIndex !== -1) {
         this.tableData.splice(rowIndex, 1);
@@ -646,7 +653,7 @@ export default {
       });
       this.listLoading = false;
     },
-    confirmEdit(row) {
+    confirmEdit(row) { // 确定编辑
       row.edit = false;
       row.originalTitle = row.edit;
       this.$message({
@@ -659,17 +666,35 @@ export default {
     setEdit(row) {
       row.edit = !row.edit;
     },
-    handleClose(done) {
+    ditto(row,type) { // 内容同上功能
+      if(row.materialsId.length > 2) {
+        let sorting = null;
+        for(let i=0; i < this.tableData.length; i++) {
+            if(row.materialsId == this.tableData[i].materialsId) {
+              sorting = i;             
+            }
+        }     
+        if(type === 6 && sorting > 0) {
+          row.packingWay = this.tableData[sorting-1].packingWay;
+        }else if(type === 8 && sorting > 0) {
+          row.require = this.tableData[sorting-1].require;
+        }
+      }else{
+        this.$message.error('请先填写物料编码')
+      }
+
+    },
+    handleClose(done) { // 关闭窗口
       this.$confirm("确认关闭？")
         .then(_ => {
           done();
         })
         .catch(_ => {});
     },
-    fetchData() {
+    fetchData() { // 获取数据
         this.list = this.tableData
     },
-    handleDownload() {
+    handleDownload() { // 导出表格
       this.downloadLoading = true
       import('@/vendor/Export2Excel').then(excel => {
         const tHeader = ['物料编码', '产品名称', '型号', '脉冲', '单位','数量','包装方式','表号','配件']
@@ -684,7 +709,7 @@ export default {
         })
       })
     },
-    formatJson(filterVal, jsonData) {
+    formatJson(filterVal, jsonData) { // 把表格数据转换为JSON
       return jsonData.map(v => filterVal.map(j => {
         if (j === 'timestamp') {
           return parseTime(v[j])
@@ -692,6 +717,12 @@ export default {
           return v[j]
         }
       }))
+    },
+    getPrintSorting() {
+      let id = this.tableHeaderdata[0].indentId;
+      let frist = id.indexOf('-')
+      let second = id.lastIndexOf('-')
+      return id.slice(frist+1,frist+3) + id.slice(second+1);
     }
   },
   data() {
@@ -718,32 +749,27 @@ export default {
       listLoading: true,
       filename: '生产任务通知单 ' + this.getDate(),
       autoWidth: true,
-      tableHeaderdata: [
+      tableHeaderdata: [ // 表头部分
         {
-          indentIdCN: "订单编号",
-          indentId: "GX65683",
-          dateCN: "要求完成日期",
-          date: "5.20 ",
-          unit: "只",
-          others: " ",
-          name: " "
+          indentIdCN: "订单编号", // 标题：订单编号
+          indentId: "C-A-HID-6-180203", // 内容：订单编号
+          dateCN: "要求完成日期", // 标题：要求完成日期
+          date: "" // 内容：要求完成日期
         }
       ],
-      tableData: [
+      tableData: [ // 表格内容部分
         {
-          id: 1,
-          materialsId: "C010281",
-          ProductName: "多流干式蓝塑铜壳（凸台）冷水表40°，预装远传-蓝色表盖（一字型表盖）",
-          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
-          pulse: "1L",
-          number: 7800,
-          require: "冷水不含接帽，热水含接帽，铁壳放置橡胶垫片，铅封全部换成蓝色，塑料铅封",
-          tableNumber: "壳体编号：E170812201-E170820000",
-          unit: "只",
-          packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
+          materialsId: "C010281", // 物料编码
+          ProductName: "多流干式蓝塑铜壳（凸台）冷水表40°，预装远传-蓝色表盖（一字型表盖）", // 产品名称
+          type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）", // 型号
+          pulse: "1L", // 脉冲
+          number: 7800, // 数量
+          require: "冷水不含接帽，热水含接帽，铁壳放置橡胶垫片，铅封全部换成蓝色，塑料铅封", // 配件
+          tableNumber: "壳体编号：E170812201-E170820000", // 表号
+          unit: "只", // 单位
+          packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘" // 包装方式
         },
         {
-          id: 2,
           materialsId: "C010282",
           ProductName: "多流干式蓝塑铜壳（凸台）冷水表40°，预装远传-蓝色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -755,7 +781,6 @@ export default {
           packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
-          id: 3,
           materialsId: "C010283",
           ProductName: "多流干式蓝塑铜壳（凸台）冷水表40°，预装远传-蓝色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -767,7 +792,6 @@ export default {
           packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
-          id: 4,
           materialsId: "C010284",
           ProductName: "多流干式蓝塑铜壳（凸台）热水表90°，预装远传-红色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -779,7 +803,6 @@ export default {
           packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
-          id: 5,
           materialsId: "C010285",
           ProductName: "多流干式蓝塑铜壳（凸台）热水表90°，预装远传-红色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -791,7 +814,6 @@ export default {
           packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
-          id: 6,
           materialsId: "C010286",
           ProductName: "多流干式蓝塑铜壳（凸台）热水表90°，预装远传-红色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -803,7 +825,6 @@ export default {
           packingWay: "贴条形码，无合格证，无说明书，中性铅封，排序纸盒，打托盘"
         },
         {
-          id: 7,
           materialsId: "C010287",
           ProductName: "多流干式蓝塑铁壳法兰式（凸台），冷水表-预装远传-蓝色表盖（一字型表盖）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -815,7 +836,6 @@ export default {
           packingWay: "复合纸箱，套泡沫盖，套气球袋"
         },
         {
-          id: 8,
           materialsId: "C010288",
           ProductName: "DN50-DN200自制/外购可拆式，蓝塑灰铁壳体，冷水50°，流量内控1.5（Qn，Qt）3（Qmin），国标PN10，预装远传，自制360°透明罩/钛美合金钢体盖，外购不同透明罩/普通钢表盖",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -827,7 +847,6 @@ export default {
           packingWay: "复合纸箱，配橡胶垫片，套泡沫盖，套气泡袋，中性铅封，指定铭牌"
         },
         {
-          id: 11,
           materialsId: "C0102811",
           ProductName: "整机外购垂直螺翼式打表-冷水50°，蓝塑球墨壳-PN10-巴西法兰标准钛镁合金360°钢表盖-技数器360度预装远传（每只表装2处磁铁）",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -839,7 +858,6 @@ export default {
           packingWay: "DN50-150复合纸箱，DN200-300胶合板木箱，配橡胶垫片"
         },
         {
-          id: 12,
           materialsId: "C0102812",
           ProductName: "单流D5远传线",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -851,7 +869,6 @@ export default {
           packingWay: "DN50-150复合纸箱，DN200-300胶合板木箱，配橡胶垫片"
         },
         {
-          id: 13,
           materialsId: "C0102813",
           ProductName: "甬美多流远传线",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -863,7 +880,6 @@ export default {
           packingWay: "DN50-150复合纸箱，DN200-300胶合板木箱，配橡胶垫片"
         },
         {
-          id: 14,
           materialsId: "C0102814",
           ProductName: "可拆式大表远传线",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -875,7 +891,6 @@ export default {
           packingWay: "参照上一单打包方式"
         },
         {
-          id: 15,
           materialsId: "C0102815",
           ProductName: "可拆式大表远传线",
           type: "LXSG-20D3C/ZD（R80/无接帽/二极磁钢）",
@@ -892,6 +907,10 @@ export default {
 };
 </script>
 <style>
+body{
+  zoom: 67% ;
+  color: black;
+}
 .elTable {
   margin: 10px 0 0 60px;
   width: 90%;
@@ -911,13 +930,19 @@ export default {
   white-space: normal;
   word-break: break-all;
   line-height: 92.48px;
-  padding-left: 10px;
   padding-right: 10px;
-  margin-left: 60px;
-  width: 1432px;
+  width: 1580px;
   height: 92.48px;
-  border: 1px solid  #E8EBF4;
+  border: 1px solid  black;
   border-top: 0;
+  font-size: 20px;
+}
+.el-table {
+  border: 1px solid black;
+}
+
+.othersRequire > span {
+  margin-left: 10px;
 }
 .othersInput {
   width: 1300px;
@@ -925,7 +950,8 @@ export default {
   color: #6a6f77;
 }
 .tableDate{
-  margin: 10px 0 0 70px; 
+  margin: 10px 0 0 10px; 
+  font-size: 20px;
 }
 .nameInput {
   width: 80px;
@@ -934,7 +960,7 @@ export default {
 }
 .allow {
   position: relative;
-  left: 960px;
+  left: 1200px;
   bottom: 40px;
 }
 .title>h1 {
@@ -942,6 +968,31 @@ export default {
 }
 .title {
   margin-bottom: 50px; 
+}
+.editionNum {
+  font-size: 20px;  
+  padding-bottom:20px;   
+}
+.number {
+  position: absolute;
+  right: 20px;
+  font-size: 20px;  
+  padding-bottom:20px; 
+}
+.el-dialog__body {
+  color: black;
+}
+.el-table--border td, .el-table--border th {
+  border-right: 1px solid black;
+}
+.el-table--border td, .el-table--border th {
+  border-bottom: 1px solid black;  
+}
+.el-table td, .el-table th.is-leaf {
+  border-bottom: 1px solid black;    
+}
+.printTable {
+  font-size: 20px;
 }
 #storeCanvas {
   margin: 10px 0 0 60px;
