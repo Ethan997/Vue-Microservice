@@ -753,7 +753,7 @@ export default {
       tableHeaderdata: [ // 表头部分
         {
           indentIdCN: "订单编号", // 标题：订单编号
-          indentId: "C-A-HID-6-180203", // 内容：订单编号
+          indentId: "", // 内容：订单编号
           dateCN: "要求完成日期", // 标题：要求完成日期
           date: "" // 内容：要求完成日期
         }

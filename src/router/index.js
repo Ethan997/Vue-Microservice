@@ -48,19 +48,19 @@ export const constantRouterMap = [
         path: 'user_role_mapper',
         name: 'UserRoleMapper',
         component: () => import('@/views/authentication/user_role_mapper/index'),
-        meta: { title: '用户管理', icon: 'people' }
+        meta: { title: '新增排单', icon: 'people' }
       },
       {
         path: 'role_acl_mapper',
         name: 'RoleAclMapper',
         component: () => import('@/views/authentication/role_acl_mapper/index'),
-        meta: { title: '角色管理', icon: 'peoples' }
+        meta: { title: '排单审核', icon: 'peoples' }
       },
       {
         path: 'acl_modul_detail',
         name: 'AclModulDetail',
         component: () => import('@/views/authentication/acl_modul_detail/index'),
-        meta: { title: '功能管理', icon: 'table' }
+        meta: { title: '排单统计', icon: 'table' }
       }
     ]
   },
